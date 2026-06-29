@@ -1,0 +1,122 @@
+import type { Booking, ItineraryItem, Place, Trip, TravelPreference } from '@/src/types/api';
+
+/** Synthetic Buenos Aires + Bariloche demo data for portfolio demos. */
+export const DEMO_TRIP: Trip = {
+  id: 'demo-trip-1',
+  name: 'Argentina — Buenos Aires & Bariloche',
+  start_date: '2026-08-01',
+  end_date: '2026-08-10',
+  base_currency: 'ARS',
+  home_timezone: 'America/Argentina/Buenos_Aires',
+  status: 'planning',
+  created_at: '2026-06-01T10:00:00Z',
+  updated_at: '2026-06-01T10:00:00Z',
+};
+
+export const DEMO_PREFERENCES: TravelPreference = {
+  trip_id: DEMO_TRIP.id,
+  budget_level: 'moderate',
+  pace: 'moderate',
+  interests: ['food', 'culture', 'nature'],
+  food_preferences: ['steak', 'empanadas', 'wine'],
+  nightlife_interest: 3,
+  hiking_interest: 4,
+  skiing_interest: 0,
+  max_walking_minutes: 30,
+  preferred_start_time: '09:00',
+  notes: 'First visit to Argentina. Want to experience both city and lake district.',
+};
+
+export const DEMO_BOOKINGS: Booking[] = [
+  {
+    id: 'demo-booking-1',
+    trip_id: DEMO_TRIP.id,
+    type: 'hotel',
+    provider: 'Alvear Palace Hotel',
+    title: 'Alvear Palace Hotel — 3 nights',
+    confirmation_code: 'ALV-88421',
+    start_at: '2026-08-01T15:00:00-03:00',
+    end_at: '2026-08-04T11:00:00-03:00',
+    timezone: 'America/Argentina/Buenos_Aires',
+    latitude: -34.5889,
+    longitude: -58.3927,
+    cost_amount: 450000,
+    currency: 'ARS',
+    status: 'confirmed',
+    source_document_id: 'demo-doc-1',
+    source_page: 1,
+    source_excerpt: 'Check-in begins at 15:00. Early check-in subject to availability.',
+    confidence: 0.95,
+    created_at: '2026-06-01T10:00:00Z',
+    updated_at: '2026-06-01T10:00:00Z',
+  },
+  {
+    id: 'demo-booking-2',
+    trip_id: DEMO_TRIP.id,
+    type: 'flight',
+    provider: 'Aerolíneas Argentinas',
+    title: 'AR1682 Buenos Aires → Bariloche',
+    confirmation_code: 'AR-552901',
+    start_at: '2026-08-04T14:30:00-03:00',
+    end_at: '2026-08-04T17:15:00-03:00',
+    timezone: 'America/Argentina/Buenos_Aires',
+    cost_amount: 185000,
+    currency: 'ARS',
+    status: 'confirmed',
+    created_at: '2026-06-01T10:00:00Z',
+    updated_at: '2026-06-01T10:00:00Z',
+  },
+];
+
+export const DEMO_ITINERARY_ITEMS: ItineraryItem[] = [
+  {
+    id: 'demo-item-1',
+    trip_id: DEMO_TRIP.id,
+    date: '2026-08-02',
+    start_time: '10:00',
+    end_time: '12:00',
+    title: 'San Telmo Market',
+    description: 'Sunday antiques fair and street tango',
+    status: 'suggested',
+    latitude: -34.6212,
+    longitude: -58.3731,
+  },
+  {
+    id: 'demo-item-2',
+    trip_id: DEMO_TRIP.id,
+    date: '2026-08-06',
+    start_time: '09:00',
+    end_time: '13:00',
+    title: 'Circuito Chico',
+    description: 'Scenic drive around Nahuel Huapi lake',
+    status: 'suggested',
+    latitude: -41.1335,
+    longitude: -71.3103,
+    weather_note: 'Partly cloudy, 12°C — good for outdoor sightseeing',
+  },
+];
+
+export const DEMO_PLACES: Place[] = [
+  {
+    id: 'demo-place-1',
+    trip_id: DEMO_TRIP.id,
+    name: 'Café Tortoni',
+    category: 'food',
+    latitude: -34.6083,
+    longitude: -58.3792,
+    address: 'Av. de Mayo 825, Buenos Aires',
+    source: 'user_saved',
+    user_saved: true,
+  },
+  {
+    id: 'demo-place-2',
+    trip_id: DEMO_TRIP.id,
+    name: 'Cerro Campanario',
+    category: 'attraction',
+    latitude: -41.1367,
+    longitude: -71.3119,
+    address: 'Bariloche, Río Negro',
+    source: 'user_saved',
+    user_saved: true,
+  },
+];
