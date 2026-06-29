@@ -3,12 +3,15 @@
  * Generates TypeScript types from the FastAPI OpenAPI schema.
  * Requires a running backend: set API_SCHEMA_URL or EXPO_PUBLIC_API_BASE_URL.
  */
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { loadProjectEnv } from './load-env.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
+
+loadProjectEnv(root);
 
 const baseUrl = process.env.API_SCHEMA_URL
   ?? process.env.EXPO_PUBLIC_API_BASE_URL?.replace(/\/v1\/?$/, '')

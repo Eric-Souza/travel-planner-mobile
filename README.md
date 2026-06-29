@@ -38,8 +38,8 @@ Expo/React Native client for a **local-first AI travel planner**. This app handl
 
 ```bash
 npm install
-cp .env.example .env
-# Edit .env with your machine's LAN IP (see below)
+npm run setup   # creates .env from .env.example if missing
+# Edit .env if using a physical phone (see below)
 npm start
 ```
 
@@ -75,6 +75,7 @@ Fetches `openapi.json` and writes `src/api/generated/api-types.generated.ts`. Re
 
 | Command | Description |
 |---------|-------------|
+| `npm run setup` | Create `.env` from `.env.example` (first clone) |
 | `npm start` | Start Expo dev server |
 | `npm run android` | Open on Android emulator |
 | `npm run ios` | Open on iOS simulator (macOS) |

@@ -58,8 +58,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "setup": "node scripts/setup.mjs",
     "api:generate": "node scripts/generate-api-types.mjs",
-    "test": "jest"
+    "test": "jest",
+    "test:integration": "jest src/__tests__/integration.api.test.ts"
   },
   "private": true
 }
