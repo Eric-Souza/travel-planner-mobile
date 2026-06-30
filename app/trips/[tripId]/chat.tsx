@@ -4,19 +4,17 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
+import { Chip, IconButton, Surface, Text, TextInput } from 'react-native-paper';
 import { PrimaryButton } from '@/src/components/Card';
 import { OfflineBanner } from '@/src/components/StateViews';
 import { CitationList, ToolResultList } from '@/src/features/shared/FeatureComponents';
 import { useChatStream } from '@/src/hooks/useChatStream';
 import { useNetworkStatus } from '@/src/hooks/useNetworkStatus';
 import { useUiStore } from '@/src/store/uiStore';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 export default function ChatScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -35,10 +33,14 @@ export default function ChatScreen() {
   if (demoMode) {
     return (
       <View style={styles.container}>
-        <Text style={styles.demo}>
-          Demo mode — connect to the API to ask grounded questions with streaming citations.
-        </Text>
-        <Text style={styles.prompt}>Try: "What time is my check-in?"</Text>
+        <Surface style={styles.demoCard} elevation={1}>
+          <Text variant="bodyMedium" style={styles.demo}>
+            Demo mode — connect to the API to ask grounded questions with streaming citations.
+          </Text>
+          <Chip icon="lightbulb-outline" style={styles.demoChip}>
+            Try: &quot;What time is my check-in?&quot;
+          </Chip>
+        </Surface>
       </View>
     );
   }
@@ -56,79 +58,105 @@ export default function ChatScreen() {
         keyExtractor={(m) => m.id}
         contentContainerStyle={styles.messages}
         renderItem={({ item }) => (
-          <View
+          <Surface
             style={[
               styles.bubble,
               item.role === 'user' ? styles.userBubble : styles.assistantBubble,
             ]}
+            elevation={item.role === 'user' ? 0 : 1}
           >
             {item.statusMessage ? (
-              <Text style={styles.statusChip}>{item.statusMessage}</Text>
+              <Chip compact style={styles.statusChip} textStyle={styles.statusChipText}>
+                {item.statusMessage}
+              </Chip>
             ) : null}
-            <Text style={styles.messageText}>{item.content || (isStreaming ? '…' : '')}</Text>
+            <Text
+              variant="bodyMedium"
+              style={item.role === 'user' ? styles.userText : styles.assistantText}
+            >
+              {item.content || (isStreaming ? '…' : '')}
+            </Text>
             <ToolResultList results={item.toolResults} />
             <CitationList sources={item.sources} />
-          </View>
+          </Surface>
         )}
         ListHeaderComponent={
           suggestedPrompts.length && messages.length === 0 ? (
             <View style={styles.prompts}>
-              <Text style={styles.promptsLabel}>Suggested</Text>
-              {suggestedPrompts.map((p) => (
-                <Pressable
-                  key={p}
-                  style={styles.promptChip}
-                  onPress={() => void sendMessage(p)}
-                  disabled={!isOnline || isStreaming}
-                  accessibilityLabel={`Suggested prompt: ${p}`}
-                >
-                  <Text style={styles.promptText}>{p}</Text>
-                </Pressable>
-              ))}
+              <Text variant="labelLarge" style={styles.promptsLabel}>
+                Suggested
+              </Text>
+              <View style={styles.promptRow}>
+                {suggestedPrompts.map((p) => (
+                  <Chip
+                    key={p}
+                    mode="outlined"
+                    onPress={() => void sendMessage(p)}
+                    disabled={!isOnline || isStreaming}
+                    style={styles.promptChip}
+                    accessibilityLabel={`Suggested prompt: ${p}`}
+                  >
+                    {p}
+                  </Chip>
+                ))}
+              </View>
             </View>
           ) : null
         }
       />
 
       {error ? (
-        <View style={styles.errorRow}>
-          <Text style={styles.errorText}>{error}</Text>
+        <Surface style={styles.errorRow} elevation={0}>
+          <Text variant="bodySmall" style={styles.errorText}>
+            {error}
+          </Text>
           <PrimaryButton label="Retry" onPress={retry} variant="secondary" />
-        </View>
+        </Surface>
       ) : null}
 
-      <View style={styles.inputRow}>
+      <Surface style={styles.inputRow} elevation={4}>
         <TextInput
+          mode="outlined"
           style={styles.input}
           value={input}
           onChangeText={setInput}
           placeholder="Ask about your trip…"
           editable={isOnline && !isStreaming}
           multiline
+          dense
           accessibilityLabel="Chat message input"
         />
         {isStreaming ? (
-          <PrimaryButton label="Stop" onPress={cancel} variant="danger" />
+          <IconButton icon="stop-circle" iconColor={colors.error} onPress={cancel} accessibilityLabel="Stop" />
         ) : (
-          <PrimaryButton
-            label="Send"
+          <IconButton
+            icon="send"
+            iconColor={colors.primary}
             onPress={handleSend}
             disabled={!isOnline || !input.trim()}
+            accessibilityLabel="Send message"
           />
         )}
-      </View>
+      </Surface>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  demo: { ...typography.body, color: colors.textSecondary, padding: spacing.lg },
-  prompt: { ...typography.caption, color: colors.primary, paddingHorizontal: spacing.lg },
+  container: { flex: 1, backgroundColor: colors.background },
+  demoCard: {
+    margin: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    gap: spacing.md,
+  },
+  demo: { color: colors.textSecondary },
+  demoChip: { alignSelf: 'flex-start' },
   messages: { padding: spacing.md, gap: spacing.sm },
   bubble: {
     padding: spacing.md,
-    borderRadius: 12,
+    borderRadius: 16,
     maxWidth: '90%',
     marginBottom: spacing.sm,
   },
@@ -139,54 +167,38 @@ const styles = StyleSheet.create({
   assistantBubble: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  messageText: {
-    ...typography.body,
-    color: colors.text,
-  },
+  userText: { color: colors.onPrimary },
+  assistantText: { color: colors.text },
   statusChip: {
-    ...typography.caption,
-    color: colors.suggested,
+    alignSelf: 'flex-start',
     marginBottom: spacing.xs,
-    fontStyle: 'italic',
+    backgroundColor: colors.surfaceElevated,
   },
-  prompts: { marginBottom: spacing.md, gap: spacing.xs },
-  promptsLabel: { ...typography.caption, color: colors.textSecondary },
-  promptChip: {
-    backgroundColor: colors.background,
-    padding: spacing.sm,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  promptText: { ...typography.caption, color: colors.primary },
+  statusChipText: { color: colors.suggested, fontStyle: 'italic' },
+  prompts: { marginBottom: spacing.md, gap: spacing.sm },
+  promptsLabel: { color: colors.textSecondary },
+  promptRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  promptChip: { backgroundColor: colors.surface },
   inputRow: {
     flexDirection: 'row',
     padding: spacing.sm,
-    gap: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
+    gap: spacing.xs,
     alignItems: 'flex-end',
+    backgroundColor: colors.surface,
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: spacing.sm,
     maxHeight: 100,
-    ...typography.body,
-    color: colors.text,
+    backgroundColor: colors.surface,
   },
   errorRow: {
     padding: spacing.sm,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.surfaceElevated,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  errorText: { ...typography.caption, color: colors.error, flex: 1 },
+  errorText: { color: colors.error, flex: 1 },
 });

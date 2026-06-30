@@ -1,100 +1,142 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Card, Divider, List, Surface, Text } from 'react-native-paper';
 import { getApiBaseUrl, getApiRootUrl } from '@/src/api/client';
 import { PrimaryButton } from '@/src/components/Card';
+import { Screen } from '@/src/components/Screen';
 import { ErrorState, LoadingState } from '@/src/components/StateViews';
 import { useHealth } from '@/src/hooks/useHealth';
 import { getNetworkErrorMessage } from '@/src/utils/errors';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 export default function HomeScreen() {
   const { data, isLoading, isError, error, refetch, isFetching } = useHealth();
+  const healthy = !isLoading && !isFetching && !isError;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Travel Planner AI</Text>
-      <Text style={styles.subheading}>Local-first mobile travel organizer</Text>
+    <Screen
+      title="Travel Planner AI"
+      subtitle="Your local-first travel organizer with grounded AI assistance"
+    >
+      <Surface style={styles.hero} elevation={1}>
+        <Text variant="titleLarge" style={styles.heroTitle}>
+          Plan smarter trips
+        </Text>
+        <Text variant="bodyMedium" style={styles.heroBody}>
+          Upload bookings, build timelines, chat with citations, and review AI suggestions —
+          all synced with your backend.
+        </Text>
+      </Surface>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>API root</Text>
-        <Text style={styles.value}>{getApiRootUrl()}</Text>
-        <Text style={styles.label}>API base (/v1)</Text>
-        <Text style={styles.value}>{getApiBaseUrl()}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.label}>Backend health</Text>
-        {isLoading || isFetching ? (
-          <LoadingState message="Checking backend…" />
-        ) : isError ? (
-          <ErrorState
-            message={getNetworkErrorMessage(error)}
-            onRetry={() => void refetch()}
+      <Card mode="elevated" style={styles.card}>
+        <Card.Content>
+          <Text variant="labelLarge" style={styles.sectionLabel}>
+            Connection
+          </Text>
+          <List.Item
+            title="API root"
+            description={getApiRootUrl()}
+            left={(props) => <List.Icon {...props} icon="server-network" />}
+            descriptionNumberOfLines={2}
+            descriptionStyle={styles.mono}
           />
-        ) : (
-          <View>
-            <Text style={styles.statusOk} accessibilityLabel="Backend is healthy">
-              ● {data?.status ?? 'ok'}
-            </Text>
-            {data?.app_env ? (
-              <Text style={styles.meta}>Environment: {data.app_env}</Text>
-            ) : null}
-            {data?.database ? (
-              <Text style={styles.meta}>Database: {data.database}</Text>
-            ) : null}
-          </View>
-        )}
-      </View>
+          <Divider />
+          <List.Item
+            title="API base (/v1)"
+            description={getApiBaseUrl()}
+            left={(props) => <List.Icon {...props} icon="api" />}
+            descriptionNumberOfLines={2}
+            descriptionStyle={styles.mono}
+          />
+        </Card.Content>
+      </Card>
+
+      <Card mode="elevated" style={styles.card}>
+        <Card.Content>
+          <Text variant="labelLarge" style={styles.sectionLabel}>
+            Backend health
+          </Text>
+          {isLoading || isFetching ? (
+            <LoadingState message="Checking backend…" />
+          ) : isError ? (
+            <ErrorState
+              message={getNetworkErrorMessage(error)}
+              onRetry={() => void refetch()}
+            />
+          ) : (
+            <View style={styles.healthRow}>
+              <List.Icon
+                icon={healthy ? 'check-circle' : 'alert-circle'}
+                color={healthy ? colors.success : colors.warning}
+              />
+              <View style={styles.healthText}>
+                <Text variant="titleMedium" style={{ color: healthy ? colors.success : colors.warning }}>
+                  {data?.status ?? 'ok'}
+                </Text>
+                {data?.app_env ? (
+                  <Text variant="bodySmall" style={styles.meta}>
+                    Environment: {data.app_env}
+                  </Text>
+                ) : null}
+                {data?.database ? (
+                  <Text variant="bodySmall" style={styles.meta}>
+                    Database: {data.database}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          )}
+        </Card.Content>
+      </Card>
 
       <PrimaryButton
         label="View trips"
         onPress={() => router.push('/trips')}
-        variant="primary"
+        icon="airplane"
       />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  hero: {
     padding: spacing.lg,
-    gap: spacing.md,
+    borderRadius: 16,
+    backgroundColor: colors.heroGradient,
+    marginBottom: spacing.sm,
   },
-  heading: {
-    ...typography.title,
+  heroTitle: {
     color: colors.text,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
   },
-  subheading: {
-    ...typography.body,
+  heroBody: {
+    color: colors.textSecondary,
+    lineHeight: 22,
+  },
+  sectionLabel: {
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  mono: {
+    fontFamily: 'SpaceMono',
+    fontSize: 12,
+  },
+  healthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  healthText: {
+    flex: 1,
+    gap: 2,
+  },
+  meta: {
     color: colors.textSecondary,
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  value: {
-    ...typography.body,
-    color: colors.text,
     marginBottom: spacing.sm,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
-  },
-  statusOk: {
-    ...typography.subtitle,
-    color: colors.success,
-  },
-  meta: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
+    backgroundColor: colors.surface,
   },
 });

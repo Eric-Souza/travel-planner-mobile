@@ -1,4 +1,5 @@
 import { getTripDocuments, addTripDocument, updateTripDocument } from '@/src/cache/documents';
+import { appendFileToFormData } from '@/src/utils/uploadFormData';
 import { apiRequest } from './client';
 import {
   mapBookingFromApi,
@@ -24,11 +25,7 @@ export async function listDocuments(tripId: string) {
 
 export async function uploadDocument({ tripId, file }: UploadDocumentParams) {
   const form = new FormData();
-  form.append('file', {
-    uri: file.uri,
-    name: file.name,
-    type: file.mimeType,
-  } as unknown as Blob);
+  await appendFileToFormData(form, file);
 
   const result = await apiRequest<DocumentApi>(`/trips/${tripId}/documents`, {
     method: 'POST',

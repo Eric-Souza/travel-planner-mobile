@@ -17,10 +17,11 @@ Expo/React Native client for a **local-first AI travel planner**. This app handl
 | API types | [openapi-typescript](https://github.com/drwpow/openapi-typescript) | 7.x | Generated from FastAPI OpenAPI |
 | Offline cache | [@react-native-async-storage/async-storage](https://react-native-async-storage.github.io/async-storage/) | 3.x | Read-only trip/document cache |
 | Maps | [react-native-webview](https://github.com/react-native-webview/react-native-webview) + Leaflet/OSM | 14.x | Presentation-only map pins |
+| Icons | [@expo/vector-icons](https://icons.expo.fyi) | 15.x | Tab and UI icons (Material Community) |
 | Bottom sheets | [@gorhom/bottom-sheet](https://gorhom.dev/react-native-bottom-sheet/) | 5.x | Source citation drawer |
 | File upload | [expo-document-picker](https://docs.expo.dev/versions/latest/sdk/document-picker/) | 56 | PDF / TXT / EML selection |
 | Network | [expo-network](https://docs.expo.dev/versions/latest/sdk/network/) | 56 | Offline detection |
-| Icons | [@expo/vector-icons](https://icons.expo.fyi) | 15.x | Tab and UI icons |
+| UI components | [React Native Paper](https://callstack.github.io/react-native-paper/) | 5.x | Material Design 3 (buttons, cards, forms, lists) |
 | Gestures / animation | react-native-gesture-handler, react-native-reanimated | 3.x / 4.x | Navigation and sheets |
 | Testing | [Jest](https://jestjs.io) + [ts-jest](https://kulshekhar.github.io/ts-jest/) | 29.x | Unit tests (SSE, dates, timeline) |
 | Package manager | npm | — | `npm install`, `npm start` |

@@ -1,8 +1,9 @@
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useCallback, useMemo, useRef } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Divider, Text } from 'react-native-paper';
 import { useUiStore } from '@/src/store/uiStore';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 export function SourceBottomSheet() {
   const sheetRef = useRef<BottomSheet>(null);
@@ -32,15 +33,24 @@ export function SourceBottomSheet() {
       enablePanDownToClose
       onClose={handleClose}
       backdropComponent={renderBackdrop}
+      backgroundStyle={styles.sheetBackground}
+      handleIndicatorStyle={styles.handle}
     >
       <BottomSheetScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{selectedSource.title}</Text>
+        <Text variant="titleLarge" style={styles.title}>
+          {selectedSource.title}
+        </Text>
         {selectedSource.page != null ? (
-          <Text style={styles.meta}>Page {selectedSource.page}</Text>
+          <Text variant="labelMedium" style={styles.meta}>
+            Page {selectedSource.page}
+          </Text>
         ) : null}
-        <Text style={styles.excerpt}>{selectedSource.excerpt}</Text>
+        <Divider style={styles.divider} />
+        <Text variant="bodyMedium" style={styles.excerpt}>
+          {selectedSource.excerpt}
+        </Text>
         {selectedSource.fetched_at ? (
-          <Text style={styles.meta}>
+          <Text variant="bodySmall" style={styles.meta}>
             Fetched {new Date(selectedSource.fetched_at).toLocaleString()}
           </Text>
         ) : null}
@@ -50,21 +60,31 @@ export function SourceBottomSheet() {
 }
 
 const styles = StyleSheet.create({
+  sheetBackground: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  handle: {
+    backgroundColor: colors.border,
+    width: 40,
+  },
   content: {
     padding: spacing.lg,
     gap: spacing.sm,
   },
   title: {
-    ...typography.subtitle,
     color: colors.text,
+    fontWeight: '700',
   },
   meta: {
-    ...typography.caption,
     color: colors.textSecondary,
   },
+  divider: {
+    marginVertical: spacing.sm,
+  },
   excerpt: {
-    ...typography.body,
     color: colors.text,
-    lineHeight: 22,
+    lineHeight: 24,
   },
 });

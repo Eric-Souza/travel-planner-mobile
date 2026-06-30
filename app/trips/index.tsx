@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Switch, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { Card, FAB, List, Switch, Text } from 'react-native-paper';
 import { PrimaryButton } from '@/src/components/Card';
 import { EmptyState, ErrorState, LoadingState } from '@/src/components/StateViews';
 import {
@@ -12,7 +13,7 @@ import { useTrips } from '@/src/hooks/useTrips';
 import { useUiStore } from '@/src/store/uiStore';
 import { formatTripDate } from '@/src/utils/dates';
 import { getNetworkErrorMessage } from '@/src/utils/errors';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 import type { TripSummary } from '@/src/types/api';
 
 export default function TripsListScreen() {
@@ -33,18 +34,25 @@ export default function TripsListScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.demoRow}>
-        <Text style={styles.demoLabel}>Demo mode</Text>
-        <Switch
-          value={demoMode}
-          onValueChange={setDemoMode}
-          accessibilityLabel="Toggle demo mode with Buenos Aires and Bariloche sample data"
+      <Card mode="elevated" style={styles.demoCard}>
+        <List.Item
+          title="Demo mode"
+          description="Buenos Aires + Bariloche sample data"
+          left={(props) => <List.Icon {...props} icon="test-tube" />}
+          right={() => (
+            <Switch
+              value={demoMode}
+              onValueChange={setDemoMode}
+              accessibilityLabel="Toggle demo mode"
+            />
+          )}
         />
-      </View>
+      </Card>
 
       <FlatList
         data={trips}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl refreshing={isFetching && !demoMode} onRefresh={() => void refetch()} />
         }
@@ -57,25 +65,37 @@ export default function TripsListScreen() {
           />
         }
         renderItem={({ item }) => (
-          <Pressable
+          <Card
+            mode="elevated"
             style={styles.tripCard}
             onPress={() => router.push(`/trips/${item.id}`)}
-            accessibilityRole="button"
             accessibilityLabel={`Open trip ${item.name}`}
           >
-            <Text style={styles.tripName}>{item.name}</Text>
-            <Text style={styles.tripDates}>
-              {formatTripDate(item.start_date, item.home_timezone)} –{' '}
-              {formatTripDate(item.end_date, item.home_timezone)}
-            </Text>
-            {item.booking_count != null ? (
-              <Text style={styles.tripMeta}>{item.booking_count} bookings</Text>
-            ) : null}
-          </Pressable>
+            <Card.Content>
+              <List.Item
+                title={item.name}
+                description={`${formatTripDate(item.start_date, item.home_timezone)} – ${formatTripDate(item.end_date, item.home_timezone)}`}
+                left={(props) => <List.Icon {...props} icon="bag-suitcase" />}
+                right={() =>
+                  item.booking_count != null ? (
+                    <Text variant="labelMedium" style={styles.bookingCount}>
+                      {item.booking_count} bookings
+                    </Text>
+                  ) : null
+                }
+              />
+            </Card.Content>
+          </Card>
         )}
       />
 
-      <PrimaryButton label="Create trip" onPress={() => router.push('/trips/create')} />
+      <FAB
+        icon="plus"
+        label="Create trip"
+        style={styles.fab}
+        onPress={() => router.push('/trips/create')}
+        accessibilityLabel="Create trip"
+      />
     </View>
   );
 }
@@ -83,41 +103,30 @@ export default function TripsListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.md,
+    backgroundColor: colors.background,
   },
-  demoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-    padding: spacing.sm,
+  demoCard: {
+    margin: spacing.md,
+    marginBottom: 0,
     backgroundColor: colors.surface,
-    borderRadius: 8,
   },
-  demoLabel: {
-    ...typography.label,
-    color: colors.text,
+  list: {
+    padding: spacing.md,
+    paddingBottom: 96,
+    gap: spacing.sm,
   },
   tripCard: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: 12,
     marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  tripName: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  tripDates: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  tripMeta: {
-    ...typography.caption,
+  bookingCount: {
     color: colors.primary,
-    marginTop: 4,
+    alignSelf: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.md,
+    bottom: spacing.md,
+    backgroundColor: colors.primary,
   },
 });

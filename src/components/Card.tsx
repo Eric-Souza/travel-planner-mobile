@@ -1,5 +1,7 @@
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { colors, spacing, typography } from '@/src/theme';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Button, Card as PaperCard, Chip, type ButtonProps } from 'react-native-paper';
+import { spacing } from '@/src/theme';
+import { colors } from '@/src/theme';
 
 type CardProps = {
   children: React.ReactNode;
@@ -11,17 +13,22 @@ type CardProps = {
 export function Card({ children, style, onPress, accessibilityLabel }: CardProps) {
   if (onPress) {
     return (
-      <Pressable
+      <PaperCard
+        mode="elevated"
         style={[styles.card, style]}
         onPress={onPress}
-        accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
       >
-        {children}
-      </Pressable>
+        <PaperCard.Content style={styles.content}>{children}</PaperCard.Content>
+      </PaperCard>
     );
   }
-  return <View style={[styles.card, style]}>{children}</View>;
+
+  return (
+    <PaperCard mode="elevated" style={[styles.card, style]}>
+      <PaperCard.Content style={styles.content}>{children}</PaperCard.Content>
+    </PaperCard>
+  );
 }
 
 type StatusBadgeProps = {
@@ -29,20 +36,26 @@ type StatusBadgeProps = {
 };
 
 const STATUS_CONFIG = {
-  confirmed: { label: 'Confirmed', color: colors.confirmed, bg: '#D1FAE5' },
-  extracted: { label: 'AI extracted', color: colors.extracted, bg: '#EDE9FE' },
-  suggested: { label: 'Suggested', color: colors.suggested, bg: '#DBEAFE' },
-  conflict: { label: 'Conflict', color: colors.conflict, bg: '#FEE2E2' },
-  rejected: { label: 'Rejected', color: colors.textSecondary, bg: colors.border },
-  failed: { label: 'Failed', color: colors.error, bg: '#FEE2E2' },
+  confirmed: { label: 'Confirmed', color: colors.confirmed },
+  extracted: { label: 'AI extracted', color: colors.extracted },
+  suggested: { label: 'Suggested', color: colors.suggested },
+  conflict: { label: 'Conflict', color: colors.conflict },
+  rejected: { label: 'Rejected', color: colors.textSecondary },
+  failed: { label: 'Failed', color: colors.error },
 } as const;
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status];
   return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]} accessibilityLabel={config.label}>
-      <Text style={[styles.badgeText, { color: config.color }]}>{config.label}</Text>
-    </View>
+    <Chip
+      compact
+      mode="flat"
+      textStyle={[styles.chipText, { color: config.color }]}
+      style={[styles.chip, { backgroundColor: `${config.color}33` }]}
+      accessibilityLabel={config.label}
+    >
+      {config.label}
+    </Chip>
   );
 }
 
@@ -51,6 +64,9 @@ type PrimaryButtonProps = {
   onPress: () => void;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger';
+  icon?: ButtonProps['icon'];
+  loading?: boolean;
+  style?: ViewStyle;
 };
 
 export function PrimaryButton({
@@ -58,54 +74,60 @@ export function PrimaryButton({
   onPress,
   disabled,
   variant = 'primary',
+  icon,
+  loading,
+  style,
 }: PrimaryButtonProps) {
-  const bg =
-    variant === 'danger' ? colors.error : variant === 'secondary' ? colors.border : colors.primary;
-  const textColor = variant === 'secondary' ? colors.text : '#fff';
+  const mode: ButtonProps['mode'] =
+    variant === 'secondary' ? 'outlined' : variant === 'danger' ? 'contained' : 'contained';
 
   return (
-    <Pressable
-      style={[styles.button, { backgroundColor: bg }, disabled && styles.disabled]}
+    <Button
+      mode={mode}
       onPress={onPress}
       disabled={disabled}
-      accessibilityRole="button"
+      loading={loading}
+      icon={icon}
+      buttonColor={variant === 'danger' ? colors.error : undefined}
+      textColor={variant === 'secondary' ? colors.primary : undefined}
+      style={[styles.button, style]}
+      contentStyle={styles.buttonContent}
       accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled }}
     >
-      <Text style={[styles.buttonText, { color: textColor }]}>{label}</Text>
-    </Pressable>
+      {label}
+    </Button>
   );
+}
+
+export function ButtonRow({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
+  return <View style={[styles.buttonRow, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     marginBottom: spacing.sm,
+    backgroundColor: colors.surface,
   },
-  badge: {
+  content: {
+    paddingVertical: spacing.sm,
+  },
+  chip: {
     alignSelf: 'flex-start',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 6,
+    height: 26,
   },
-  badgeText: {
-    ...typography.caption,
+  chipText: {
+    fontSize: 12,
     fontWeight: '600',
+    marginVertical: 0,
   },
   button: {
-    paddingVertical: spacing.sm + 4,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 10,
+    marginTop: spacing.xs,
   },
-  buttonText: {
-    ...typography.label,
+  buttonContent: {
+    paddingVertical: 4,
   },
-  disabled: {
-    opacity: 0.5,
+  buttonRow: {
+    gap: spacing.sm,
   },
 });

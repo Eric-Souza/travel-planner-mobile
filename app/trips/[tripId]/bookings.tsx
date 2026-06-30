@@ -1,20 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import {
-  Alert,
-  FlatList,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useForm } from 'react-hook-form';
+import { Alert, FlatList, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Portal, Text } from 'react-native-paper';
 import { z } from 'zod';
-import { PrimaryButton, StatusBadge } from '@/src/components/Card';
+import { PrimaryButton } from '@/src/components/Card';
+import { FormDateTimeField } from '@/src/components/FormDateField';
+import { FormField } from '@/src/components/FormField';
+import { FormSelect } from '@/src/components/FormSelect';
+import { Screen } from '@/src/components/Screen';
 import { EmptyState, ErrorState, LoadingState, OfflineBanner } from '@/src/components/StateViews';
+import { BOOKING_TYPES, TIMEZONES } from '@/src/constants/formOptions';
 import { DEMO_BOOKINGS, DEMO_TRIP } from '@/src/features/demo/demoData';
 import { BookingCard } from '@/src/features/timeline/TimelineCards';
 import { useBookings, useCreateBooking } from '@/src/hooks/useBookings';
@@ -22,16 +19,16 @@ import { useNetworkStatus } from '@/src/hooks/useNetworkStatus';
 import { useTrip } from '@/src/hooks/useTrips';
 import { useUiStore } from '@/src/store/uiStore';
 import { getNetworkErrorMessage } from '@/src/utils/errors';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 const bookingSchema = z.object({
   type: z.enum(['flight', 'hotel', 'train', 'bus', 'activity', 'restaurant', 'custom']),
-  title: z.string().min(1),
+  title: z.string().min(1, 'Title is required'),
   provider: z.string().optional(),
   confirmation_code: z.string().optional(),
-  start_at: z.string().min(1),
-  end_at: z.string().min(1),
-  timezone: z.string().min(1),
+  start_at: z.string().min(1, 'Start date & time required'),
+  end_at: z.string().min(1, 'End date & time required'),
+  timezone: z.string().min(1, 'Select a timezone'),
 });
 
 type BookingForm = z.infer<typeof bookingSchema>;
@@ -48,7 +45,12 @@ export default function BookingsScreen() {
   const activeTrip = demoMode ? DEMO_TRIP : trip;
   const bookings = demoMode ? DEMO_BOOKINGS : (data ?? []);
 
-  const { control, handleSubmit, reset } = useForm<BookingForm>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<BookingForm>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       type: 'hotel',
@@ -59,11 +61,15 @@ export default function BookingsScreen() {
     },
   });
 
+  const closeForm = () => {
+    setShowForm(false);
+    reset();
+  };
+
   const onSubmit = handleSubmit(async (values) => {
     try {
       await createBooking.mutateAsync(values);
-      reset();
-      setShowForm(false);
+      closeForm();
     } catch (e) {
       Alert.alert('Error', (e as Error).message);
     }
@@ -77,7 +83,7 @@ export default function BookingsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <Screen contentStyle={styles.container}>
       {!isOnline ? <OfflineBanner /> : null}
 
       {!demoMode ? (
@@ -85,6 +91,7 @@ export default function BookingsScreen() {
           label="Add manual booking"
           onPress={() => setShowForm(true)}
           disabled={!isOnline}
+          icon="plus"
         />
       ) : null}
 
@@ -102,7 +109,7 @@ export default function BookingsScreen() {
               timezone={activeTrip?.home_timezone ?? 'UTC'}
             />
             {item.source_excerpt ? (
-              <Text style={styles.excerpt} numberOfLines={2}>
+              <Text variant="bodySmall" style={styles.excerpt} numberOfLines={2}>
                 Source: {item.source_excerpt}
               </Text>
             ) : null}
@@ -110,39 +117,73 @@ export default function BookingsScreen() {
         )}
       />
 
-      <Modal visible={showForm} animationType="slide">
-        <ScrollView contentContainerStyle={styles.form}>
-          <Text style={styles.formTitle}>Manual booking</Text>
-          {(['type', 'title', 'provider', 'confirmation_code', 'start_at', 'end_at', 'timezone'] as const).map(
-            (field) => (
-              <View key={field} style={styles.field}>
-                <Text style={styles.label}>{field.replace(/_/g, ' ')}</Text>
-                <Controller
-                  control={control}
-                  name={field as keyof BookingForm}
-                  render={({ field: { onChange, value } }) => (
-                    <TextInput
-                      style={styles.input}
-                      value={String(value ?? '')}
-                      onChangeText={onChange}
-                      placeholder={
-                        field.includes('_at') ? 'ISO datetime' : undefined
-                      }
-                    />
-                  )}
-                />
-              </View>
-            ),
-          )}
-          <PrimaryButton label="Save booking" onPress={() => void onSubmit()} />
-          <PrimaryButton
-            label="Cancel"
-            onPress={() => setShowForm(false)}
-            variant="secondary"
+      <Portal>
+        <Modal
+          visible={showForm}
+          onDismiss={closeForm}
+          contentContainerStyle={styles.modal}
+        >
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <Text variant="titleLarge" style={styles.formTitle}>
+              Manual booking
+            </Text>
+
+          <FormSelect
+            control={control}
+            name="type"
+            label="Booking type"
+            options={BOOKING_TYPES}
+            error={errors.type?.message}
           />
-        </ScrollView>
-      </Modal>
-    </View>
+          <FormField
+            control={control}
+            name="title"
+            label="Title"
+            error={errors.title?.message}
+          />
+          <FormField
+            control={control}
+            name="provider"
+            label="Provider (optional)"
+          />
+          <FormField
+            control={control}
+            name="confirmation_code"
+            label="Confirmation code (optional)"
+            autoCapitalize="characters"
+          />
+          <FormDateTimeField
+            control={control}
+            name="start_at"
+            label="Starts"
+            error={errors.start_at?.message}
+          />
+          <FormDateTimeField
+            control={control}
+            name="end_at"
+            label="Ends"
+            error={errors.end_at?.message}
+          />
+          <FormSelect
+            control={control}
+            name="timezone"
+            label="Timezone"
+            options={TIMEZONES}
+            searchable
+            error={errors.timezone?.message}
+          />
+
+          <PrimaryButton
+            label="Save booking"
+            onPress={() => void onSubmit()}
+            loading={createBooking.isPending}
+            icon="content-save"
+          />
+          <PrimaryButton label="Cancel" onPress={closeForm} variant="secondary" />
+          </ScrollView>
+        </Modal>
+      </Portal>
+    </Screen>
   );
 }
 
@@ -150,21 +191,21 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md },
   list: { marginTop: spacing.md },
   excerpt: {
-    ...typography.caption,
     color: colors.textSecondary,
     marginTop: -spacing.xs,
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.xs,
   },
-  form: { padding: spacing.lg, gap: spacing.sm },
-  formTitle: { ...typography.title, color: colors.text },
-  field: { gap: 4 },
-  label: { ...typography.caption, color: colors.textSecondary },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: spacing.sm,
-    backgroundColor: colors.surface,
+  modal: {
+    margin: spacing.md,
+    padding: spacing.lg,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceElevated,
+    maxHeight: '90%',
+  },
+  formTitle: {
+    color: colors.text,
+    marginBottom: spacing.md,
+    fontWeight: '700',
   },
 });

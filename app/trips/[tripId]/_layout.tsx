@@ -1,15 +1,33 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { colors } from '@/src/theme';
+import { Platform, StyleSheet, type ColorValue } from 'react-native';
+import { useTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { spacing } from '@/src/theme';
+
+type TabIconProps = {
+  name: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  color: ColorValue;
+  size: number;
+};
+
+function TabIcon({ name, color, size }: TabIconProps) {
+  return <MaterialCommunityIcons name={name} size={size} color={String(color)} />;
+}
 
 export default function TripLayout() {
+  const theme = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.primary,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+        tabBarStyle: [styles.tabBar, { backgroundColor: theme.colors.surface }],
+        tabBarLabelStyle: styles.tabLabel,
+        headerStyle: { backgroundColor: theme.colors.surface },
+        headerTintColor: theme.colors.primary,
+        headerTitleStyle: { fontWeight: '600', color: theme.colors.onSurface },
+        headerShadowVisible: false,
       }}
     >
       <Tabs.Screen
@@ -17,7 +35,7 @@ export default function TripLayout() {
         options={{
           title: 'Overview',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <TabIcon name="view-dashboard-outline" color={color} size={size} />
           ),
         }}
       />
@@ -26,7 +44,7 @@ export default function TripLayout() {
         options={{
           title: 'Timeline',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+            <TabIcon name="calendar-month-outline" color={color} size={size} />
           ),
         }}
       />
@@ -35,34 +53,7 @@ export default function TripLayout() {
         options={{
           title: 'Documents',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="bookings"
-        options={{
-          title: 'Bookings',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="ticket-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="preferences"
-        options={{
-          title: 'Preferences',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="options-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="itinerary"
-        options={{
-          title: 'Itinerary',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map-outline" size={size} color={color} />
+            <TabIcon name="file-document-outline" color={color} size={size} />
           ),
         }}
       />
@@ -71,23 +62,41 @@ export default function TripLayout() {
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble-outline" size={size} color={color} />
+            <TabIcon name="chat-processing-outline" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="places"
+        name="more"
         options={{
-          title: 'Places',
+          title: 'More',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="location-outline" size={size} color={color} />
+            <TabIcon name="dots-horizontal-circle-outline" color={color} size={size} />
           ),
         }}
       />
+      <Tabs.Screen name="bookings" options={{ href: null, title: 'Bookings' }} />
+      <Tabs.Screen name="preferences" options={{ href: null, title: 'Preferences' }} />
+      <Tabs.Screen name="itinerary" options={{ href: null, title: 'Itinerary' }} />
+      <Tabs.Screen name="places" options={{ href: null, title: 'Places' }} />
       <Tabs.Screen
         name="review/[documentId]"
-        options={{ href: null, title: 'Review booking' }}
+        options={{ href: null, title: 'Review Booking' }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    borderTopColor: 'transparent',
+    height: Platform.OS === 'ios' ? 88 : 64,
+    paddingTop: spacing.xs,
+    paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.sm,
+    elevation: 8,
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+});

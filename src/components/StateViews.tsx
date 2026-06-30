@@ -1,12 +1,6 @@
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native';
-import { colors, spacing, typography } from '@/src/theme';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Banner, Button, Text } from 'react-native-paper';
+import { colors, spacing } from '@/src/theme';
 
 type LoadingStateProps = {
   message?: string;
@@ -16,8 +10,10 @@ type LoadingStateProps = {
 export function LoadingState({ message = 'Loading…', style }: LoadingStateProps) {
   return (
     <View style={[styles.centered, style]} accessibilityRole="progressbar">
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.message}>{message}</Text>
+      <ActivityIndicator size="large" animating />
+      <Text variant="bodyLarge" style={styles.muted}>
+        {message}
+      </Text>
     </View>
   );
 }
@@ -39,17 +35,18 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <View style={[styles.centered, style]}>
-      <Text style={styles.title}>{title}</Text>
-      {description ? <Text style={styles.description}>{description}</Text> : null}
+      <Text variant="titleMedium" style={styles.title}>
+        {title}
+      </Text>
+      {description ? (
+        <Text variant="bodyMedium" style={styles.muted}>
+          {description}
+        </Text>
+      ) : null}
       {actionLabel && onAction ? (
-        <Pressable
-          style={styles.button}
-          onPress={onAction}
-          accessibilityRole="button"
-          accessibilityLabel={actionLabel}
-        >
-          <Text style={styles.buttonText}>{actionLabel}</Text>
-        </Pressable>
+        <Button mode="contained" onPress={onAction} style={styles.action}>
+          {actionLabel}
+        </Button>
       ) : null}
     </View>
   );
@@ -64,17 +61,16 @@ type ErrorStateProps = {
 export function ErrorState({ message, onRetry, style }: ErrorStateProps) {
   return (
     <View style={[styles.centered, style]}>
-      <Text style={styles.errorTitle}>Something went wrong</Text>
-      <Text style={styles.description}>{message}</Text>
+      <Text variant="titleMedium" style={styles.errorTitle}>
+        Something went wrong
+      </Text>
+      <Text variant="bodyMedium" style={styles.muted}>
+        {message}
+      </Text>
       {onRetry ? (
-        <Pressable
-          style={styles.button}
-          onPress={onRetry}
-          accessibilityRole="button"
-          accessibilityLabel="Retry"
-        >
-          <Text style={styles.buttonText}>Retry</Text>
-        </Pressable>
+        <Button mode="contained" onPress={onRetry} style={styles.action} icon="refresh">
+          Retry
+        </Button>
       ) : null}
     </View>
   );
@@ -86,12 +82,15 @@ type OfflineBannerProps = {
 
 export function OfflineBanner({ syncedAt }: OfflineBannerProps) {
   return (
-    <View style={styles.offlineBanner} accessibilityLiveRegion="polite">
-      <Text style={styles.offlineText}>
-        Offline — showing last synced data
-        {syncedAt ? ` (${new Date(syncedAt).toLocaleString()})` : ''}
-      </Text>
-    </View>
+    <Banner
+      visible
+      icon="wifi-off"
+      style={styles.offlineBanner}
+      accessibilityLabel="Offline mode"
+    >
+      Offline — showing last synced data
+      {syncedAt ? ` (${new Date(syncedAt).toLocaleString()})` : ''}
+    </Banner>
   );
 }
 
@@ -104,43 +103,21 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: {
-    ...typography.subtitle,
     color: colors.text,
     textAlign: 'center',
   },
   errorTitle: {
-    ...typography.subtitle,
     color: colors.error,
     textAlign: 'center',
   },
-  description: {
-    ...typography.body,
+  muted: {
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  message: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-  },
-  button: {
+  action: {
     marginTop: spacing.md,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 4,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    ...typography.label,
   },
   offlineBanner: {
     backgroundColor: colors.offline,
-    padding: spacing.sm,
-  },
-  offlineText: {
-    color: '#fff',
-    ...typography.caption,
-    textAlign: 'center',
   },
 });

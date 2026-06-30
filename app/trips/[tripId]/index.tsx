@@ -1,6 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Card, Chip, Surface, Text } from 'react-native-paper';
 import { PrimaryButton } from '@/src/components/Card';
+import { Screen } from '@/src/components/Screen';
 import { ErrorState, LoadingState } from '@/src/components/StateViews';
 import {
   DEMO_BOOKINGS,
@@ -13,7 +15,7 @@ import { useTrip } from '@/src/hooks/useTrips';
 import { useUiStore } from '@/src/store/uiStore';
 import { formatTripDate } from '@/src/utils/dates';
 import { getNetworkErrorMessage } from '@/src/utils/errors';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 export default function TripDashboardScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -34,106 +36,134 @@ export default function TripDashboardScreen() {
   if (!activeTrip) return null;
 
   const nextActions = [
-    bookingCount === 0
-      ? { label: 'Upload a reservation', route: 'documents' as const }
-      : { label: 'View timeline', route: 'timeline' as const },
-    { label: 'Set preferences', route: 'preferences' as const },
-    { label: 'Ask a question', route: 'chat' as const },
-  ];
+    {
+      label: bookingCount === 0 ? 'Upload a reservation' : 'View timeline',
+      route: bookingCount === 0 ? 'documents' : 'timeline',
+      icon: bookingCount === 0 ? 'file-upload' : 'calendar-clock',
+    },
+    { label: 'Set preferences', route: 'preferences', icon: 'tune' },
+    { label: 'Ask a question', route: 'chat', icon: 'chat-question' },
+    { label: 'Explore places', route: 'places', icon: 'map-marker' },
+  ] as const;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.name}>{activeTrip.name}</Text>
-      <Text style={styles.dates}>
-        {formatTripDate(activeTrip.start_date, activeTrip.home_timezone)} –{' '}
-        {formatTripDate(activeTrip.end_date, activeTrip.home_timezone)}
-      </Text>
-      <Text style={styles.meta}>
-        {activeTrip.base_currency} · {activeTrip.home_timezone}
-      </Text>
+    <Screen scroll contentStyle={styles.content}>
+      <Surface style={styles.headerCard} elevation={1}>
+        <Text variant="headlineSmall" style={styles.name}>
+          {activeTrip.name}
+        </Text>
+        <Text variant="bodyMedium" style={styles.dates}>
+          {formatTripDate(activeTrip.start_date, activeTrip.home_timezone)} –{' '}
+          {formatTripDate(activeTrip.end_date, activeTrip.home_timezone)}
+        </Text>
+        <View style={styles.chips}>
+          <Chip icon="currency-usd" compact>
+            {activeTrip.base_currency}
+          </Chip>
+          <Chip icon="clock-outline" compact>
+            {activeTrip.home_timezone}
+          </Chip>
+        </View>
+      </Surface>
 
       <View style={styles.stats}>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{bookingCount}</Text>
-          <Text style={styles.statLabel}>Bookings</Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{itineraryCount}</Text>
-          <Text style={styles.statLabel}>Plan items</Text>
-        </View>
+        <Surface style={styles.stat} elevation={1}>
+          <Text variant="displaySmall" style={styles.statValue}>
+            {bookingCount}
+          </Text>
+          <Text variant="labelLarge" style={styles.statLabel}>
+            Bookings
+          </Text>
+        </Surface>
+        <Surface style={styles.stat} elevation={1}>
+          <Text variant="displaySmall" style={styles.statValue}>
+            {itineraryCount}
+          </Text>
+          <Text variant="labelLarge" style={styles.statLabel}>
+            Plan items
+          </Text>
+        </Surface>
       </View>
 
-      <Text style={styles.section}>Suggested next steps</Text>
+      <Text variant="titleMedium" style={styles.section}>
+        Suggested next steps
+      </Text>
       {nextActions.map((action) => (
         <PrimaryButton
           key={action.route}
           label={action.label}
           onPress={() => router.push(`/trips/${tripId}/${action.route}`)}
           variant="secondary"
+          icon={action.icon}
         />
       ))}
 
       {demoMode ? (
-        <Text style={styles.demoNote}>
-          Demo mode — showing synthetic Buenos Aires + Bariloche data. Preferences:{' '}
-          {DEMO_PREFERENCES.pace} pace, {DEMO_PREFERENCES.budget_level} budget.
-        </Text>
+        <Card mode="outlined" style={styles.demoNote}>
+          <Card.Content>
+            <Text variant="bodySmall" style={styles.demoText}>
+              Demo mode — synthetic Buenos Aires + Bariloche data. Preferences:{' '}
+              {DEMO_PREFERENCES.pace} pace, {DEMO_PREFERENCES.budget_level} budget.
+            </Text>
+          </Card.Content>
+        </Card>
       ) : null}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  content: {
+    gap: spacing.md,
+  },
+  headerCard: {
     padding: spacing.lg,
-    gap: spacing.sm,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
   },
   name: {
-    ...typography.title,
     color: colors.text,
+    fontWeight: '700',
   },
   dates: {
-    ...typography.body,
     color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
-  meta: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: spacing.md,
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
   },
   stats: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginBottom: spacing.lg,
   },
   stat: {
     flex: 1,
-    backgroundColor: colors.surface,
     padding: spacing.md,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   statValue: {
-    ...typography.title,
     color: colors.primary,
+    fontWeight: '700',
   },
   statLabel: {
-    ...typography.caption,
     color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   section: {
-    ...typography.subtitle,
     color: colors.text,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
   },
   demoNote: {
-    ...typography.caption,
+    borderColor: colors.extracted,
+    backgroundColor: colors.surfaceElevated,
+  },
+  demoText: {
     color: colors.extracted,
-    marginTop: spacing.lg,
-    lineHeight: 18,
+    lineHeight: 20,
   },
 });

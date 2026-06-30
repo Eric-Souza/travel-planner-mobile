@@ -5,6 +5,7 @@ export default function TripsLayout() {
     <Stack
       screenOptions={{
         headerBackTitle: 'Back',
+        headerTitleStyle: { fontWeight: '600' },
       }}
     >
       <Stack.Screen name="index" options={{ title: 'My Trips' }} />

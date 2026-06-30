@@ -1,16 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
+import Slider from '@react-native-community/slider';
+import { SegmentedButtons, Text } from 'react-native-paper';
 import { z } from 'zod';
 import { PrimaryButton } from '@/src/components/Card';
+import { FormField } from '@/src/components/FormField';
+import { Screen } from '@/src/components/Screen';
 import { ErrorState, LoadingState, OfflineBanner } from '@/src/components/StateViews';
 import { DEMO_PREFERENCES } from '@/src/features/demo/demoData';
 import { usePreferences, useUpdatePreferences } from '@/src/hooks/usePreferences';
 import { useNetworkStatus } from '@/src/hooks/useNetworkStatus';
 import { useUiStore } from '@/src/store/uiStore';
 import { getNetworkErrorMessage } from '@/src/utils/errors';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 const prefsSchema = z.object({
   budget_level: z.enum(['budget', 'moderate', 'luxury']),
@@ -52,7 +56,10 @@ export default function PreferencesScreen() {
         budget_level: values.budget_level,
         pace: values.pace,
         interests: values.interests.split(',').map((s: string) => s.trim()).filter(Boolean),
-        food_preferences: values.food_preferences.split(',').map((s: string) => s.trim()).filter(Boolean),
+        food_preferences: values.food_preferences
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean),
         max_walking_minutes: values.max_walking_minutes,
         notes: values.notes,
       });
@@ -69,71 +76,132 @@ export default function PreferencesScreen() {
     );
   }
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {!isOnline ? <OfflineBanner /> : null}
-      <Text style={styles.help}>
-        These preferences influence AI itinerary proposals. They do not override confirmed
-        bookings.
-      </Text>
+  const disabled = demoMode || !isOnline;
 
-      {(['budget_level', 'pace', 'interests', 'food_preferences', 'max_walking_minutes', 'notes'] as const).map(
-        (field) => (
-          <View key={field} style={styles.field}>
-            <Text style={styles.label}>
-              {field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+  return (
+    <Screen
+      title="Trip preferences"
+      subtitle="These influence AI itinerary proposals. They do not override confirmed bookings."
+      scroll
+    >
+      {!isOnline ? <OfflineBanner /> : null}
+
+      <Text variant="labelLarge" style={styles.fieldLabel}>
+        Budget
+      </Text>
+      <Controller
+        control={control}
+        name="budget_level"
+        render={({ field: { onChange, value } }) => (
+          <SegmentedButtons
+            value={value}
+            onValueChange={onChange}
+            buttons={[
+              { value: 'budget', label: 'Budget', disabled },
+              { value: 'moderate', label: 'Moderate', disabled },
+              { value: 'luxury', label: 'Luxury', disabled },
+            ]}
+            style={styles.segmented}
+          />
+        )}
+      />
+
+      <Text variant="labelLarge" style={styles.fieldLabel}>
+        Pace
+      </Text>
+      <Controller
+        control={control}
+        name="pace"
+        render={({ field: { onChange, value } }) => (
+          <SegmentedButtons
+            value={value}
+            onValueChange={onChange}
+            buttons={[
+              { value: 'relaxed', label: 'Relaxed', disabled },
+              { value: 'moderate', label: 'Moderate', disabled },
+              { value: 'packed', label: 'Packed', disabled },
+            ]}
+            style={styles.segmented}
+          />
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="interests"
+        label="Interests"
+        placeholder="museums, food, hiking"
+        disabled={disabled}
+      />
+      <FormField
+        control={control}
+        name="food_preferences"
+        label="Food preferences"
+        placeholder="vegetarian, local cuisine"
+        disabled={disabled}
+      />
+      <Controller
+        control={control}
+        name="max_walking_minutes"
+        render={({ field: { onChange, value } }) => (
+          <View style={styles.sliderBlock}>
+            <Text variant="labelLarge" style={styles.fieldLabel}>
+              Max walking: {value} min
             </Text>
-            <Controller
-              control={control}
-              name={field}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  value={String(value ?? '')}
-                  onChangeText={(text) =>
-                    onChange(
-                      field === 'max_walking_minutes' ? Number(text) || 0 : text,
-                    )
-                  }
-                  editable={!demoMode && isOnline}
-                  multiline={field === 'notes'}
-                />
-              )}
+            <Slider
+              value={value}
+              onValueChange={(v) => onChange(Math.round(v / 5) * 5)}
+              minimumValue={5}
+              maximumValue={120}
+              step={5}
+              disabled={disabled}
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.border}
+              thumbTintColor={colors.primary}
             />
           </View>
-        ),
-      )}
+        )}
+      />
+      <FormField
+        control={control}
+        name="notes"
+        label="Notes"
+        multiline
+        numberOfLines={3}
+        disabled={disabled}
+      />
 
       {!demoMode ? (
         <PrimaryButton
           label={updatePrefs.isPending ? 'Saving…' : 'Save preferences'}
           onPress={() => void onSubmit()}
           disabled={!isOnline || updatePrefs.isPending}
+          loading={updatePrefs.isPending}
+          icon="content-save"
         />
       ) : (
-        <Text style={styles.demo}>Demo mode — preferences shown read-only.</Text>
+        <Text variant="bodySmall" style={styles.demo}>
+          Demo mode — preferences shown read-only.
+        </Text>
       )}
-    </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, gap: spacing.md },
-  help: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    lineHeight: 18,
-  },
-  field: { gap: spacing.xs },
-  label: { ...typography.label, color: colors.text },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: spacing.sm + 4,
-    backgroundColor: colors.surface,
-    ...typography.body,
+  fieldLabel: {
     color: colors.text,
+    marginTop: spacing.sm,
   },
-  demo: { ...typography.caption, color: colors.extracted },
+  segmented: {
+    marginBottom: spacing.sm,
+  },
+  sliderBlock: {
+    marginBottom: spacing.md,
+    gap: spacing.xs,
+  },
+  demo: {
+    color: colors.extracted,
+    marginTop: spacing.md,
+  },
 });

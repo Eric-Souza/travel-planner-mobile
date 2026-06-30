@@ -1,9 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useForm } from 'react-hook-form';
+import { Alert, StyleSheet, View } from 'react-native';
+import { Banner, Text } from 'react-native-paper';
 import { PrimaryButton, StatusBadge } from '@/src/components/Card';
+import { FormDateTimeField } from '@/src/components/FormDateField';
+import { FormField } from '@/src/components/FormField';
+import { FormSelect } from '@/src/components/FormSelect';
+import { Screen } from '@/src/components/Screen';
 import { ErrorState, LoadingState } from '@/src/components/StateViews';
+import { TIMEZONES } from '@/src/constants/formOptions';
 import { DEMO_BOOKINGS } from '@/src/features/demo/demoData';
 import {
   useBookingCandidate,
@@ -13,7 +19,7 @@ import {
 } from '@/src/hooks/useBookings';
 import { useUiStore } from '@/src/store/uiStore';
 import { getNetworkErrorMessage } from '@/src/utils/errors';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 type ReviewForm = {
   title: string;
@@ -31,6 +37,7 @@ export default function BookingReviewScreen() {
   }>();
   const demoMode = useUiStore((s) => s.demoMode);
   const isDemoDoc = documentId === 'demo-doc-1';
+  const readOnly = demoMode || isDemoDoc;
 
   const { data, isLoading, isError, error } = useBookingCandidate(
     demoMode || isDemoDoc ? null : documentId,
@@ -68,7 +75,7 @@ export default function BookingReviewScreen() {
   const reviewStatus = booking.status === 'conflict' ? 'conflict' : 'extracted';
 
   const onConfirm = handleSubmit(async (values) => {
-    if (demoMode || isDemoDoc) {
+    if (readOnly) {
       Alert.alert('Demo mode', 'Connect to the API to confirm extractions.');
       return;
     }
@@ -83,7 +90,7 @@ export default function BookingReviewScreen() {
   });
 
   const onReject = async () => {
-    if (demoMode || isDemoDoc) {
+    if (readOnly) {
       router.back();
       return;
     }
@@ -96,113 +103,116 @@ export default function BookingReviewScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <Screen scroll>
       <View style={styles.header}>
-        <Text style={styles.title}>Review extraction</Text>
+        <Text variant="headlineSmall" style={styles.title}>
+          Review extraction
+        </Text>
         <StatusBadge status={reviewStatus} />
       </View>
 
-      <Text style={styles.warning}>
+      <Banner visible icon="robot" style={styles.bannerExtracted}>
         AI extracted — review and confirm before this becomes a confirmed booking.
-      </Text>
+      </Banner>
 
       {is_duplicate ? (
-        <Text style={styles.duplicate}>
+        <Banner visible icon="alert" style={styles.bannerDuplicate}>
           Possible duplicate — review carefully before confirming.
-        </Text>
+        </Banner>
       ) : null}
 
       {source_document_title ? (
-        <Text style={styles.source}>Source: {source_document_title}</Text>
+        <Text variant="bodySmall" style={styles.meta}>
+          Source: {source_document_title}
+        </Text>
       ) : null}
       {booking.source_excerpt ? (
-        <Text style={styles.excerpt}>"{booking.source_excerpt}"</Text>
+        <Text variant="bodyMedium" style={styles.excerpt}>
+          &quot;{booking.source_excerpt}&quot;
+        </Text>
       ) : null}
       {booking.confidence != null ? (
-        <Text style={styles.meta}>
+        <Text variant="bodySmall" style={styles.meta}>
           Confidence: {Math.round(booking.confidence * 100)}%
         </Text>
       ) : null}
       {booking.uncertainty_notes?.map((note) => (
-        <Text key={note} style={styles.uncertainty}>
+        <Text key={note} variant="bodySmall" style={styles.uncertainty}>
           ? {note}
         </Text>
       ))}
 
-      {(['title', 'provider', 'confirmation_code', 'start_at', 'end_at', 'timezone'] as const).map(
-        (field) => (
-          <View key={field} style={styles.field}>
-            <Text style={styles.label}>{field.replace(/_/g, ' ')}</Text>
-            <Controller
-              control={control}
-              name={field}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  value={value}
-                  onChangeText={onChange}
-                  editable={!demoMode && !isDemoDoc}
-                />
-              )}
-            />
-          </View>
-        ),
-      )}
+      <FormField control={control} name="title" label="Title" disabled={readOnly} />
+      <FormField control={control} name="provider" label="Provider" disabled={readOnly} />
+      <FormField
+        control={control}
+        name="confirmation_code"
+        label="Confirmation code"
+        disabled={readOnly}
+        autoCapitalize="characters"
+      />
+      <FormDateTimeField
+        control={control}
+        name="start_at"
+        label="Starts"
+        disabled={readOnly}
+      />
+      <FormDateTimeField
+        control={control}
+        name="end_at"
+        label="Ends"
+        disabled={readOnly}
+      />
+      <FormSelect
+        control={control}
+        name="timezone"
+        label="Timezone"
+        options={TIMEZONES}
+        searchable
+        disabled={readOnly}
+      />
 
       <PrimaryButton
         label="Confirm booking"
         onPress={() => void onConfirm()}
         disabled={confirm.isPending}
+        loading={confirm.isPending}
+        icon="check-circle"
       />
       <PrimaryButton
         label="Reject"
         onPress={() => void onReject()}
         variant="danger"
+        icon="close-circle"
       />
-    </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, gap: spacing.sm },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: spacing.sm,
   },
-  title: { ...typography.title, color: colors.text },
-  warning: {
-    ...typography.caption,
-    color: colors.extracted,
-    backgroundColor: '#EDE9FE',
-    padding: spacing.sm,
-    borderRadius: 8,
+  title: { color: colors.text, fontWeight: '700' },
+  bannerExtracted: {
+    backgroundColor: '#312E81',
+    marginBottom: spacing.sm,
   },
-  source: { ...typography.caption, color: colors.textSecondary },
+  bannerDuplicate: {
+    backgroundColor: '#7F1D1D',
+    marginBottom: spacing.sm,
+  },
+  meta: { color: colors.textSecondary },
   excerpt: {
-    ...typography.body,
     color: colors.text,
     fontStyle: 'italic',
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceElevated,
     padding: spacing.sm,
     borderRadius: 8,
+    marginVertical: spacing.xs,
   },
-  meta: { ...typography.caption, color: colors.textSecondary },
-  uncertainty: { ...typography.caption, color: colors.warning },
-  duplicate: {
-    ...typography.caption,
-    color: colors.conflict,
-    backgroundColor: '#FEE2E2',
-    padding: spacing.sm,
-    borderRadius: 8,
-  },
-  field: { gap: 4, marginTop: spacing.sm },
-  label: { ...typography.caption, color: colors.textSecondary, textTransform: 'capitalize' },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: spacing.sm,
-    backgroundColor: colors.surface,
-  },
+  uncertainty: { color: colors.warning, marginTop: spacing.xs },
 });
